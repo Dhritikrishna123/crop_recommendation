@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies into a separate folder
-COPY requirements.txt .
+COPY requirements.txt . 
 RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 
@@ -34,7 +34,7 @@ ENV PYTHONUNBUFFERED=1
 # Copy installed dependencies from builder stage
 COPY --from=builder /install /usr/local
 
-# Copy only the application code (keep it lean)
+# Copy application code
 COPY . .
 
 # Create necessary folders
@@ -48,5 +48,5 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:${PORT}/health || exit 1
 
-# Start the API
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Start the training first, then launch the API
+CMD ["sh", "-c", "python model_training.py && uvicorn main:app --host 0.0.0.0 --port 8080"]
